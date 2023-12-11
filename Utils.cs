@@ -4,7 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 
-namespace MonitorMod;
+namespace StorageFix;
 
 public static class Debug
 {

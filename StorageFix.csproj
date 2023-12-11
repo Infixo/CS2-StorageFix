@@ -62,13 +62,15 @@
 		<Reference Include="libcs2/Unity.*.dll" Private="False" />
 	</ItemGroup>
 	<ItemGroup>
-	  <Compile Remove="Systems\CarStorageTransferRequestSystem.cs" />
-	  <Compile Remove="Systems\DeliveryTruckAISystem.cs" />
-	  <Compile Remove="Systems\RealPopSystem.cs" />
+	  <Compile Remove="Systems\**" />
+	  <EmbeddedResource Remove="Systems\**" />
+	  <None Remove="Systems\**" />
 	</ItemGroup>
 	<ItemGroup>
-	  <None Include="Systems\CarStorageTransferRequestSystem.cs" />
-	  <None Include="Systems\DeliveryTruckAISystem.cs" />
+	  <Compile Remove="Utils.cs" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Include="Utils.cs" />
 	</ItemGroup>
 
 	<!--

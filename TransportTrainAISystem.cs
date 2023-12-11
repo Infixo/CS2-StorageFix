@@ -19,8 +19,10 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
+using Game;
+using Game.Simulation;
 
-namespace Game.Simulation;
+namespace StorageFix;
 
 [CompilerGenerated]
 public class TransportTrainAISystem : GameSystemBase
@@ -223,6 +225,7 @@ public class TransportTrainAISystem : GameSystemBase
 
         private void Tick(int jobIndex, ref Random random, Entity vehicleEntity, Owner owner, PrefabRef prefabRef, CurrentRoute currentRoute, DynamicBuffer<LayoutElement> layout, DynamicBuffer<TrainNavigationLane> navigationLanes, DynamicBuffer<ServiceDispatch> serviceDispatches, bool isUnspawned, ref Game.Vehicles.CargoTransport cargoTransport, ref Game.Vehicles.PublicTransport publicTransport, ref PathOwner pathOwner, ref Target target, ref Odometer odometer)
         {
+            //Plugin.Log($"Tick {vehicleEntity.Index}");
             if (VehicleUtils.ResetUpdatedPath(ref pathOwner))
             {
                 if (((cargoTransport.m_State & CargoTransportFlags.DummyTraffic) != 0 || (publicTransport.m_State & PublicTransportFlags.DummyTraffic) != 0) && m_LoadingResources.TryGetBuffer(vehicleEntity, out var bufferData))
@@ -738,6 +741,7 @@ public class TransportTrainAISystem : GameSystemBase
 
         private bool StartBoarding(int jobIndex, Entity vehicleEntity, CurrentRoute currentRoute, PrefabRef prefabRef, ref Game.Vehicles.CargoTransport cargoTransport, ref Game.Vehicles.PublicTransport publicTransport, ref Target target, bool isCargoVehicle)
         {
+            //if (isCargoVehicle) Plugin.Log($"StartBoarding cargo Train_{vehicleEntity.Index}");
             if (m_ConnectedData.HasComponent(target.m_Target))
             {
                 Connected connected = m_ConnectedData[target.m_Target];
@@ -886,6 +890,7 @@ public class TransportTrainAISystem : GameSystemBase
             {
                 return false;
             }
+            //if (isCargoVehicle) Plugin.Log($"StopBoarding cargo {vehicleEntity.Index}");
             bool flag2 = false;
             if (m_ConnectedData.TryGetComponent(target.m_Target, out var componentData) && m_BoardingVehicleData.TryGetComponent(componentData.m_Connected, out var componentData2))
             {
@@ -1295,6 +1300,7 @@ public class TransportTrainAISystem : GameSystemBase
         m_HandleRequestArchetype = base.EntityManager.CreateArchetype(ComponentType.ReadWrite<HandleRequest>(), ComponentType.ReadWrite<Event>());
         m_CarriagePrefabQuery = GetEntityQuery(TransportTrainCarriageSelectData.GetEntityQueryDesc());
         RequireForUpdate(m_VehicleQuery);
+        Plugin.Log("Modded TransportTrainAISystem created.");
     }
 
     [Preserve]

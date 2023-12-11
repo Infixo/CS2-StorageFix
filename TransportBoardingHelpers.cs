@@ -11,11 +11,14 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Game;
+using Game.Simulation;
 
-namespace Game.Simulation;
+namespace StorageFix;
 
 public static class TransportBoardingHelpers
 {
+    
     public struct BoardingLookupData
     {
         [ReadOnly]
@@ -114,6 +117,7 @@ public static class TransportBoardingHelpers
             m_TrainData.Update(system);
         }
     }
+    
 
     public struct BoardingData
     {
@@ -344,6 +348,7 @@ public static class TransportBoardingHelpers
             {
                 return;
             }
+            //Plugin.Log($"BeginBoarding: Train_{data.m_Vehicle.Index} from {data.m_CurrentStation.Index} to {data.m_NextStation.Index}");
             PrefabRef prefabRef = m_BoardingLookupData.m_PrefabRefData[data.m_Route];
             TransportLine transportLine = m_BoardingLookupData.m_TransportLineData[data.m_Route];
             VehicleTiming value2 = m_BoardingLookupData.m_VehicleTimingData[data.m_Waypoint];
@@ -428,7 +433,22 @@ public static class TransportBoardingHelpers
             {
                 return;
             }
+            //Plugin.Log($"UnloadRes3 from Train_{vehicle.Index} to {target.Index}");
             DynamicBuffer<Resources> targetResources = m_BoardingLookupData.m_EconomyResources[target];
+
+            // Infixo FIX FOR NEGATIVE RESOURCES
+            Plugin.Log($"Checking resources at {target.Index} while Unloading");
+            ResourceIterator iterator = ResourceIterator.GetIterator();
+            while (iterator.Next())
+            {
+                int currentResources = EconomyUtils.GetResources(iterator.resource, targetResources);
+                if (currentResources < 0)
+                {
+                    Plugin.Log($"...Fixing negative {iterator.resource} at {target.Index}");
+                    EconomyUtils.SetResources(iterator.resource, targetResources, 0);
+                }
+            }
+
             if (m_BoardingLookupData.m_LayoutElements.HasBuffer(vehicle))
             {
                 DynamicBuffer<LayoutElement> dynamicBuffer = m_BoardingLookupData.m_LayoutElements[vehicle];
@@ -451,6 +471,7 @@ public static class TransportBoardingHelpers
 
         private void UnloadResources(DynamicBuffer<Resources> sourceResources, DynamicBuffer<Resources> targetResources)
         {
+            //Plugin.Log($"UnloadRes2: {sourceResources.Length}");
             for (int i = 0; i < sourceResources.Length; i++)
             {
                 Resources resources = sourceResources[i];
@@ -465,6 +486,27 @@ public static class TransportBoardingHelpers
             {
                 DynamicBuffer<Resources> resources = m_BoardingLookupData.m_EconomyResources[source];
                 DynamicBuffer<StorageTransferRequest> dynamicBuffer = m_BoardingLookupData.m_StorageTransferRequests[source];
+                //Plugin.Log($"LoadRes3: from {source.Index} onto Train_{vehicle.Index} to {target.Index} STR {dynamicBuffer.Length}");
+                //for (int i = 0; i < dynamicBuffer.Length; i++)
+                //{
+                //StorageTransferRequest str = dynamicBuffer[i];
+                //if (str.m_Target == target) Plugin.Log($"LoadRes3[{i}]: {str.m_Amount} of {str.m_Resource} to {str.m_Target.Index} {str.m_Flags}");
+                //}
+
+                // Infixo FIX FOR NEGATIVE RESOURCES
+                /*
+                Plugin.Log($"Checking resources at {source.Index} while Loading");
+                ResourceIterator iterator = ResourceIterator.GetIterator();
+                while (iterator.Next())
+                {
+                    int currentResources = EconomyUtils.GetResources(iterator.resource, resources);
+                    if (currentResources < 0)
+                    {
+                        Plugin.Log($"...Fixing negative {iterator.resource} at {source.Index}");
+                        EconomyUtils.SetResources(iterator.resource, resources, 0);
+                    }
+                }
+                */
                 int num = 0;
                 while (num < dynamicBuffer.Length)
                 {
@@ -474,12 +516,38 @@ public static class TransportBoardingHelpers
                         num++;
                         continue;
                     }
+                    // Infixo FIX FOR NEGATIVE RESOURCES
+                    int currentResources = EconomyUtils.GetResources(value.m_Resource, resources);
+                    if (currentResources < 0)
+                    {
+                        Plugin.Log($"Fixing negative {value.m_Resource} at {source.Index}...");
+                        EconomyUtils.SetResources(value.m_Resource, resources, 0);
+                        Plugin.Log($"...and removing impossible transfer request for {value.m_Amount} of {value.m_Resource} at {source.Index} (we have 0)");
+                        dynamicBuffer.RemoveAt(num);
+                        continue;
+                    }
+                    // Infixo Fixes for erroneous STRs
+                    if (currentResources == 0)
+                    {
+                        Plugin.Log($"Removing impossible transfer request for {value.m_Amount} of {value.m_Resource} at {source.Index} (we have 0)");
+                        dynamicBuffer.RemoveAt(num);
+                        continue;
+                    }
+                    if (value.m_Amount > currentResources)
+                    {
+                        Plugin.Log($"Tweaking impossible transfer request for {value.m_Amount} of {value.m_Resource} at {source.Index} - we have {currentResources} - setting to half");
+                        value.m_Amount = currentResources >> 1;
+                    }
                     if (value.m_Amount > 0)
                     {
+                        // Infixo: check if is possible
+                        //int curRes = EconomyUtils.GetResources(value.m_Resource, resources);
                         int amount = value.m_Amount;
                         LoadResources(value.m_Resource, ref value.m_Amount, vehicle);
                         if (value.m_Amount < amount)
                         {
+                            // HERE WE TAKE THE RESOURCES
+                            //Plugin.Log($"LoadRes4: {value.m_Resource}, amount {amount} -> {value.m_Amount}, storage {curRes}");
                             EconomyUtils.AddResources(value.m_Resource, value.m_Amount - amount, resources);
                         }
                     }
@@ -522,6 +590,7 @@ public static class TransportBoardingHelpers
 
         private void LoadResources(Resource resource, ref int amount, Entity vehicle)
         {
+            //Plugin.Log($"LoadRes2: {amount} of {resource} onto Train_{vehicle.Index}");
             if (m_BoardingLookupData.m_LayoutElements.HasBuffer(vehicle))
             {
                 DynamicBuffer<LayoutElement> dynamicBuffer = m_BoardingLookupData.m_LayoutElements[vehicle];
@@ -567,6 +636,7 @@ public static class TransportBoardingHelpers
             {
                 return;
             }
+            //Plugin.Log($"LoadRes1: {amount} of {resource} onto {transportType} (capacity {vehicleData.m_CargoCapacity}).");
             if (num2 >= 0)
             {
                 Resources value = targetResources[num2];

@@ -16,7 +16,7 @@ using System.Diagnostics;
     using BepInEx.Unity.Mono;
 #endif
 
-namespace MonitorMod;
+namespace StorageFix;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 public class Plugin : BaseUnityPlugin
@@ -79,56 +79,5 @@ public class Plugin : BaseUnityPlugin
         {
             Log($"Patched method: {patchedMethod.Module.Name}:{patchedMethod.Name}");
         }
-
-        //LogWorkplaceStructure();
     }
 }
-/*
-    private void LogWorkplaceStructure()
-    {
-        int maxWorkers = 1000;
-        for (int complexity = 0; complexity < Enum.GetNames(typeof(WorkplaceComplexity)).Length; complexity++)
-        {
-            Log.Info($"Workplace structure for complexity: {complexity} ({(WorkplaceComplexity)complexity})");
-            for (int level = 1; level <= 5; level++)
-            {
-                Workplaces workplaces = Plugin.CalculateNumberOfWorkplaces(maxWorkers, (WorkplaceComplexity)complexity, level);
-                Log.Info($"Level {level}, total {workplaces.count}: {workplaces.m_Uneducated} {workplaces.m_PoorlyEducated} {workplaces.m_Educated} {workplaces.m_WellEducated} {workplaces.m_HighlyEducated}");
-            }
-        }
-    }
-
-    
-    public static Workplaces CalculateNumberOfWorkplaces(int totalWorkers, WorkplaceComplexity complexity, int buildingLevel)
-    {
-        Workplaces result = default(Workplaces);
-        int num = 4 * (int)complexity + buildingLevel - 1;
-        int num2 = totalWorkers;
-        int num3 = 0;
-        for (int i = 0; i < 5; i++)
-        {
-            int num4 = math.max(0, 8 - math.abs(num - 4 * i));
-            if (i == 0)
-            {
-                num4 += math.max(0, 8 - math.abs(num + 4));
-            }
-            if (i == 4)
-            {
-                num4 += math.max(0, 8 - math.abs(num - 20));
-            }
-            int num5 = totalWorkers * num4 / 16;
-            int num6 = totalWorkers * num4 % 16;
-            if (num2 > num5 && num6 + num3 > 0)
-            {
-                num5++;
-                num3 -= 16;
-            }
-            num3 += num6;
-            num5 = math.min(num5, num2);
-            num2 -= num5;
-            result[i] = num5;
-        }
-        return result;
-    }
-*/
-
