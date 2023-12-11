@@ -24,7 +24,7 @@ class Patches
     {
         return false; // don't execute the original system
     }
-
+    /*
     [HarmonyPatch(typeof(Game.Economy.EconomyUtils), "AddResources", 
         new Type[] { typeof(Resource), typeof(int), typeof(DynamicBuffer<Resources>) }, 
         new ArgumentType[] { ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal })]
@@ -56,4 +56,5 @@ class Patches
         __result = amount;
         return false;
     }
+    */
 }

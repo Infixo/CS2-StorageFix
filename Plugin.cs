@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Colossal.Logging;
@@ -6,11 +7,6 @@ using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Configuration;
 using HarmonyLib;
-using Game.Companies;
-using Game.Simulation;
-using Game.Prefabs;
-using Unity.Mathematics;
-using System.Diagnostics;
 
 #if BEPINEX_V6
     using BepInEx.Unity.Mono;
@@ -26,9 +22,12 @@ public class Plugin : BaseUnityPlugin
 
     public static void Log(string text)
     {
-        //string msg = GetCallingMethod(2) + ": " + text;
-        Logger.LogInfo(text);
-        s_Log.Info(text);
+        if (Logging.Value)
+        {
+            //string msg = GetCallingMethod(2) + ": " + text;
+            Logger.LogInfo(text);
+            s_Log.Info(text);
+        }
     }
     public static void LogStack(string text)
     {
@@ -50,16 +49,7 @@ public class Plugin : BaseUnityPlugin
     }
 
     // mod settings
-    //public static ConfigEntry<int> TeenAgeLimitInDays;
-    //public static ConfigEntry<int> AdultAgeLimitInDays;
-    //public static ConfigEntry<int> ElderAgeLimitInDays;
-    //public static ConfigEntry<int> Education2InDays; // high school
-    //public static ConfigEntry<int> Education3InDays; // college
-    //public static ConfigEntry<int> Education4InDays; // university
-    //public static ConfigEntry<float> GraduationLevel1; // elementary school
-    //public static ConfigEntry<float> GraduationLevel2; // high school
-    //public static ConfigEntry<float> GraduationLevel3; // college
-    //public static ConfigEntry<float> GraduationLevel4; // university
+    public static ConfigEntry<bool> Logging;
 
     private void Awake()
     {
@@ -68,7 +58,10 @@ public class Plugin : BaseUnityPlugin
         // CO logging standard as described here https://cs2.paradoxwikis.com/Logging
         s_Log = LogManager.GetLogger(MyPluginInfo.PLUGIN_NAME);
 
-        Log($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
+        // settings
+        Logging = base.Config.Bind<bool>("Settings", "Logging", false, "Enables logging to a file and BepInEx console");
+
+        Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
         var harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), MyPluginInfo.PLUGIN_GUID + "_Cities2Harmony");
         var patchedMethods = harmony.GetPatchedMethods().ToArray();
